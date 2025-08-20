@@ -26,6 +26,129 @@ A Chrome extension that transforms into the ultimate competitive programming and
 - **Performance Profiling**: Detailed performance analysis
 - **Multi-language Templates**: Pre-built competitive programming templates
 
+## 🆕 What's New in v1.1.0 — ZeroTrace Study & Quiz
+
+This release adds privacy-first, local-first study workflows and a multi-model aggregated answering path:
+
+- New side-panel modes: `Study` and `Quiz` (left `Sidebar` → book icon for Study, clipboard icon for Quiz)
+- First-run guided help modals for both modes
+- Local-only storage for study artifacts; session-only storage for quizzes
+- Multi-model answering path: backend endpoint `POST /prompt-sequential` synthesizes replies from five providers (GPT‑4, Claude‑4, GPT‑4o, Gemini, DeepSeek)
+
+### Study Utilities (Local‑first)
+
+Access: Sidebar → Study. First click shows a quick “How it works” modal. Four sub‑tabs:
+
+1) Flashcards
+- Source: current page selection or webpage text you allowed via the “Allow Page Context” button
+- Generate Cards: creates Q/A pairs from selected text on‑device (no network). You can also add cards manually.
+- Scheduling: SM‑2 lite spaced repetition (interval/ease updated on Again/Good/Easy)
+- Keyboard: ⌘/Ctrl+K to add the current Q/A inputs
+- Storage: `chrome.storage.local` under key `zt_study_flashcards_v1`
+
+2) Timer (Pomodoro)
+- Defaults 25/5 minutes; editable
+- Persisted running state with local notifications on session change (requires `notifications` permission)
+- Storage: `chrome.storage.local` key `zt_pomodoro_state_v1`
+
+3) Notes (Markdown)
+- Markdown text area with autosave
+- “Ephemeral” toggle: when ON, content is not written to disk
+- Storage (when not ephemeral): `chrome.storage.local` key `zt_notes_md_v1`
+
+4) Music (Local/URL)
+- Play a local audio file via file picker (stays on device) or paste a public URL
+- Persists volume and loop
+- Storage: `chrome.storage.local` key `zt_music_prefs_v1`
+
+First‑run modal strings (Study):
+- Flashcards: “Select any text (problem statement/hints) → Generate.” “Use ⌘/Ctrl+K to add a card manually.” “Spaced repetition schedules your next review automatically.”
+- Timer: “Pomodoro defaults to 25/5; customize in Settings.” “Enable notifications to get end‑of‑session alerts.”
+- Notes: “Markdown supported. Toggle Ephemeral to avoid saving to disk.”
+- Music: “Load a local MP3 (stays on your device) or paste a URL.”
+
+Implementation details:
+- UI: `src/panels/study/*`
+- SRS: SM‑2 lite implemented inline in `Flashcards.tsx`
+- Storage: `chrome.storage.local` only; no network calls
+- Notifications: MV3 `notifications` permission; data‑URI icon to respect CSP
+
+### Local Auto‑Assessment — Quiz (MCQ + Coding)
+
+Access: Sidebar → Quiz. Two tabs and a first‑run modal.
+
+MCQ Generator & Grader
+- Inputs: topic, difficulty, number of questions
+- Output: MCQs with 4 options and rationales (local generation heuristic)
+- Grading: runs locally and computes a score; results stay in session storage
+- Export: “Export Encrypted (.zeroquiz)”, AES‑GCM with PBKDF2 via Web Crypto; password never stored
+- Import: decrypts bundle back into the session store
+- Storage: `chrome.storage.session` key `zt_quiz_mcq_session_v1`
+
+Coding Generator & Runner
+- Languages: JavaScript runner in a restricted scope (no DOM/process/network); Python runner is disabled under strict MV3 CSP (see Note)
+- Test cases: editable list; results shown with pass/fail and expected vs got
+- Storage: `chrome.storage.session` key `zt_quiz_code_session_v1`
+
+Note on Python (Pyodide):
+- For MV3 with strict CSP (`script-src 'self'`), remote script loading is not allowed. If you need Python execution, bundle Pyodide locally inside the extension and whitelist it in the manifest, or self-host in `public/` and reference it as `self`.
+
+First‑run modal strings (Quiz):
+- MCQ: “Enter a topic + #questions → Generate. Answers and rationales appear after ‘Submit’.”
+- Coding: “Pick Python/JS → write solution → Run Tests. Code runs in a sandbox; we only store results in session.”
+
+Implementation details:
+- UI: `src/panels/quiz/*`
+- MCQ store: `chrome.storage.session`
+- Encryption: `src/utils/crypto.ts` (AES‑GCM 256 with PBKDF2‑SHA‑256)
+- JS runner: safe wrapper function with banned API tokens
+
+### Multi‑Model Answering (5‑Model Aggregation)
+
+Backend route: `POST /prompt-sequential`
+- Takes `{ prompt, conversationId, webpageContent?, selectedText? }`
+- Queries adapters in parallel: GPT‑4, Claude‑4, GPT‑4o, Gemini, DeepSeek
+- Chooses a preferred answer (priority: GPT‑4 → GPT‑4o → Claude‑4 → Gemini → DeepSeek) and appends a small provenance footer
+
+Environment variables (backend):
+- `GPT4_API_KEY`, `CLAUDE4_API_KEY`, `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, `GPT4O_API_KEY`
+- Optional base URLs/model IDs via existing model adapter envs
+
+Frontend wiring:
+- `src/hooks/useAI.ts` posts to `/prompt-sequential` for normal chat
+- Web search only triggers if “Web Access” is toggled ON
+
+### UI/UX Adjustments
+
+- Auto‑scroll behavior: stops auto‑scrolling if you scroll up, so long messages don’t jump
+- “Show Tools” button: extra panels (Hints, Interview Prep, Recommendations, ITS, Visualizer, mini Quiz, Export/Import) are hidden by default to keep the chat view readable
+
+### Storage Keys (added)
+
+- Local (`chrome.storage.local`):
+  - `zt_study_first_run_seen` (boolean)
+  - `zt_study_flashcards_v1` (Card[])
+  - `zt_pomodoro_state_v1` (PomodoroState)
+  - `zt_notes_md_v1` (markdown string)
+  - `zt_music_prefs_v1` ({ sourceType, url?, volume, loop })
+- Session (`chrome.storage.session`):
+  - `zt_quiz_first_run_seen` (boolean)
+  - `zt_quiz_mcq_session_v1` (MCQ session)
+  - `zt_quiz_code_session_v1` (Coding session)
+
+### Manifest & Permissions
+
+- MV3, strict CSP for extension pages (`script-src 'self'`)
+- Permissions: `storage`, `activeTab`, `scripting`, `tabs`, `sidePanel`, `notifications`
+- No host permission expansion beyond backend localhost
+
+### How to Access Each Feature
+
+- Study: Sidebar → Study → choose sub‑tab; allow page context if you want Flashcards to use selection/current page
+- Quiz: Sidebar → Quiz → MCQ or Coding; Export/Import for MCQ uses encrypted bundles (`.zeroquiz`)
+- Multi‑model chat: just ask in chat; backend must be running; “Web Access” only for search queries
+
+
 ## 🚀 Quick Start
 
 ### 1. Install the Extension
