@@ -602,7 +602,7 @@ app.post('/prompt', async (req, res) => {
 
     // Choose system prompt based on mode
     let systemPrompt = SYSTEM_PROMPT;
-    if (mode === 'dsa-solver' || mode === 'competitive') {
+    if (mode === 'dsa-solver') {
       systemPrompt = DSA_SOLVER_PROMPT;
     }
 
@@ -623,16 +623,7 @@ app.post('/prompt', async (req, res) => {
     let maxTokens = 500;
     
     switch (mode) {
-      case 'research':
-        temperature = 0.3; // More deterministic for research
-        maxTokens = 800;
-        break;
-      case 'code':
-        temperature = 0.2; // Very deterministic for code
-        maxTokens = 1000;
-        break;
       case 'dsa-solver':
-      case 'competitive':
         temperature = 0.1; // Very deterministic for DSA
         maxTokens = 1500;
         break;
@@ -640,7 +631,7 @@ app.post('/prompt', async (req, res) => {
         temperature = 0.5;
         maxTokens = 600;
         break;
-      default: // chat
+      default: // chat and others
         temperature = 0.7;
         maxTokens = 500;
     }
@@ -710,10 +701,12 @@ app.post('/prompt', async (req, res) => {
 const solveDSARouter = require('./routes/solve-dsa');
 const analyzeComplexityRouter = require('./routes/analyze-complexity');
 const generateTestCasesRouter = require('./routes/generate-testcases');
+const promptMultiRouter = require('./routes/prompt-multi');
 
 app.use('/', solveDSARouter);
 app.use('/', analyzeComplexityRouter);
 app.use('/', generateTestCasesRouter);
+app.use('/', promptMultiRouter);
 
 // Keep the old endpoint for backward compatibility
 app.post('/solve-dsa-legacy', async (req, res) => {

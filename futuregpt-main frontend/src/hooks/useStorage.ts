@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 
 // Safe storage interface that works in both Chrome extension and web environments
 const getStorage = () => {
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    return chrome.storage.local;
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    // Default to session storage for ephemeral behavior
+    const session = (chrome.storage as any).session;
+    if (session) return session;
+    if (chrome.storage.local) return chrome.storage.local;
   }
   // Fallback to localStorage with Chrome storage-like interface
   return {

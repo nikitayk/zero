@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import type { Message, AIConfig, DSAProblem, DSASolution, TestCase, ComplexityAnalysis, UploadedFile, ImageAnalysis, DocumentAnalysis } from '../types';
 
-// Enhanced demo responses for DSA and competitive programming
+// Enhanced demo responses for DSA
 const getDemoResponse = (input: string, mode: string) => {
   const lowerInput = input.toLowerCase();
   
-  // DSA and competitive programming queries
-  if (mode === 'dsa-solver' || mode === 'competitive' || 
+  // DSA queries
+  if (mode === 'dsa-solver' || 
       lowerInput.includes('algorithm') || lowerInput.includes('complexity') || 
       lowerInput.includes('leetcode') || lowerInput.includes('codeforces') ||
       lowerInput.includes('binary search') || lowerInput.includes('dynamic programming') ||
@@ -15,7 +15,7 @@ const getDemoResponse = (input: string, mode: string) => {
       lowerInput.includes('sort') || lowerInput.includes('hash') ||
       lowerInput.includes('stack') || lowerInput.includes('queue')) {
     
-    return `🚀 **Competitive Programming Solution**
+    return `🚀 **DSA Solution**
 
 Here's an optimized solution for your DSA problem:
 
@@ -65,33 +65,7 @@ Output: 23
 This is a demo response. With your backend server, I can provide real-time solutions for any DSA problem with multiple programming languages, complexity analysis, and edge case handling.`;
   }
   
-  // Code-related queries
-  if (lowerInput.includes('code') || lowerInput.includes('function') || lowerInput.includes('javascript') || lowerInput.includes('python') || lowerInput.includes('react')) {
-    return `Here's a code example for your request:
-
-\`\`\`javascript
-function example() {
-  // This is a demo response
-  console.log("zeroTrace is working!");
-  return "Privacy-first AI in action";
-}
-\`\`\`
-
-This is a demonstration of zeroTrace's code capabilities. In the full version with your backend server, I can provide real code generation, debugging, and explanations.`;
-  }
-  
-  // Research-related queries
-  if (mode === 'research' || lowerInput.includes('research') || lowerInput.includes('analyze') || lowerInput.includes('study')) {
-    return `Based on my analysis, here are the key findings:
-
-• **Privacy-First Design**: zeroTrace processes everything in-memory
-• **Zero Data Storage**: No persistent logging or tracking
-• **Advanced AI**: Multiple modes for different use cases
-• **Context Awareness**: Can analyze webpage content and selected text
-• **Conversation Memory**: Maintains context across interactions
-
-This is a demonstration of research capabilities. With your backend server, I can provide real-time research with web access and comprehensive analysis.`;
-  }
+  // Code Mode and Research Mode removed
   
   // Vision-related queries
   if (mode === 'vision' || lowerInput.includes('image') || lowerInput.includes('picture') || lowerInput.includes('visual')) {
@@ -108,7 +82,7 @@ In demo mode, I'm showing you the interface capabilities. With your backend serv
     
     `I understand you're exploring zeroTrace's capabilities. This extension is designed to be your private AI assistant - no data logging, no tracking, just pure AI assistance when you connect to your backend.`,
     
-    `Great to chat with you! zeroTrace offers multiple AI modes: Chat for conversations, Research for deep analysis, Code for programming help, and Vision for image understanding. All processing happens in-memory only.`,
+    `Great to chat with you! zeroTrace offers multiple AI modes: Chat, Vision, DSA Solver, Interview, and Gamification. All processing happens in-memory only.`,
     
     `I'm designed to be helpful while respecting your privacy completely. When you're ready to unlock full AI capabilities, simply ensure your backend server is running.`
   ];
@@ -137,8 +111,8 @@ export function useAI(config: AIConfig) {
     setIsLoading(true);
 
     try {
-      // Demo mode when no API key or not in Chrome extension
-      if (!config.apiKey || typeof chrome === 'undefined' || !chrome.runtime) {
+      // Only fall back to demo if backend unreachable
+      if (false) {
         const lastMessage = messages[messages.length - 1];
         // In demo mode, do NOT transform or echo the user's text back; always synthesize a distinct reply
         const demoResponse = getDemoResponse(String(lastMessage?.content || ''), mode);
@@ -174,16 +148,21 @@ export function useAI(config: AIConfig) {
         ...(context?.selectedText && { selectedText: context.selectedText })
       };
 
-      const response = await fetch('http://localhost:3000/prompt', {
+      let response: Response;
+      try {
+        response = await fetch('http://localhost:3000/prompt-sequential', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
+      } catch (e) {
+        throw new Error('BACKEND_UNREACHABLE');
+      }
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         if (response.status === 402) {
           throw new Error('Quota exceeded. Please check your OpenAI plan and billing details or wait for the next reset.');
         } else {
@@ -243,6 +222,12 @@ export function useAI(config: AIConfig) {
       } else {
         return aiResponse;
       }
+    } catch (err: any) {
+      // Hard fallback: demo text if backend unreachable
+      const lastMessage = messages[messages.length - 1];
+      const fallback = `Backend is not reachable at http://localhost:3000. Please start the server. Question: ${lastMessage?.content}`;
+      if (onStream) onStream(fallback);
+      return fallback;
     } finally {
       setIsLoading(false);
     }

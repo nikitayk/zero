@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Search, Code, Eye, Zap, Globe, Shield, Target, Users, TrendingUp } from 'lucide-react';
+import { MessageCircle, Eye, Shield, Target, Users, Zap, Code } from 'lucide-react';
 import type { AppMode } from '../types';
 
 interface WelcomeScreenProps {
@@ -13,11 +13,7 @@ const features = [
     title: 'Context-Aware Chat',
     description: 'Analyzes webpage content and selected text for relevant responses'
   },
-  {
-    icon: Search,
-    title: 'Web Search',
-    description: 'Search the web for current information when context is insufficient'
-  },
+  // Web Search feature removed with Research Mode
   {
     icon: Zap,
     title: 'Function Calling',
@@ -28,11 +24,7 @@ const features = [
     title: 'Privacy-First',
     description: 'All processing in-memory with zero data storage'
   },
-  {
-    icon: Code,
-    title: 'Code Assistant',
-    description: 'Get help with programming, debugging, and code explanations'
-  },
+  // Code Assistant removed with Code Mode
   {
     icon: Eye,
     title: 'Vision Analysis',
@@ -51,11 +43,7 @@ const competitiveFeatures = [
     title: 'Multi-Language Support',
     description: 'C++, Python, Java, JavaScript with competitive programming templates'
   },
-  {
-    icon: TrendingUp,
-    title: 'Complexity Analysis',
-    description: 'Detailed time and space complexity analysis with optimizations'
-  },
+  // Optimization feature removed with Optimization Mode
   {
     icon: Zap,
     title: 'Test Case Generation',
@@ -75,13 +63,9 @@ const competitiveFeatures = [
 
 const modeDescriptions = {
   chat: 'General conversation with context awareness',
-  research: 'Deep analysis with structured research capabilities',
-  code: 'Programming assistance with code generation and debugging',
   vision: 'Image analysis and visual content understanding',
   'dsa-solver': 'Solve complex DSA problems with optimal algorithms',
-  competitive: 'Competitive programming with advanced problem solving',
-  interview: 'Coding interview preparation and practice',
-  optimization: 'Code optimization and performance analysis'
+  interview: 'Coding interview preparation and practice'
 };
 
 const competitiveExamples = [
@@ -93,12 +77,11 @@ const competitiveExamples = [
 ];
 
 export function WelcomeScreen({ mode, hasApiKey }: WelcomeScreenProps) {
-  const isCompetitiveMode = mode === 'dsa-solver' || mode === 'competitive' || mode === 'interview' || mode === 'optimization';
-  const currentFeatures = (isCompetitiveMode ? competitiveFeatures : features).slice(0, 4);
-  const currentExamples = (isCompetitiveMode ? competitiveExamples : [
+  const isDSAContext = mode === 'dsa-solver' || mode === 'interview';
+  const currentFeatures = (isDSAContext ? competitiveFeatures : features).slice(0, 4);
+  const currentExamples = (isDSAContext ? competitiveExamples : [
     "What's on this page?",
-    "Search latest AI news",
-    mode === 'code' ? "Write a React component" : null
+    'Ask about this content'
   ]).filter(Boolean).slice(0, 2);
 
   return (
@@ -106,17 +89,17 @@ export function WelcomeScreen({ mode, hasApiKey }: WelcomeScreenProps) {
       {/* Logo and Title */}
       <div className="mb-2">
         <div className="w-10 h-10 bg-[#2B0F45] rounded-2xl flex items-center justify-center mb-2 mx-auto border border-[#9A4DFF]">
-          {isCompetitiveMode ? (
+          {isDSAContext ? (
             <Target size={20} className="text-[#9A4DFF]" />
           ) : (
             <MessageCircle size={20} className="text-[#9A4DFF]" />
           )}
         </div>
         <h1 className="text-lg font-bold text-white mb-1">
-          {isCompetitiveMode ? 'Ultimate DSA Solver' : 'zeroTrace AI'}
+          {isDSAContext ? 'Ultimate DSA Solver' : 'zeroTrace AI'}
         </h1>
         <p className="text-[#B3B3B3] text-xs">
-          {isCompetitiveMode ? 'World\'s Best Competitive Programming AI' : 'Privacy-First AI Assistant'}
+          {isDSAContext ? 'World\'s Best Competitive Programming AI' : 'Privacy-First AI Assistant'}
         </p>
       </div>
       
@@ -124,13 +107,9 @@ export function WelcomeScreen({ mode, hasApiKey }: WelcomeScreenProps) {
       <div className="mb-2">
         <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-[#1A1A1A] border border-[#2E2E2E] rounded-full text-xs text-[#B3B3B3] mb-2">
           {mode === 'chat' && <MessageCircle size={14} />}
-          {mode === 'research' && <Search size={14} />}
-          {mode === 'code' && <Code size={14} />}
           {mode === 'vision' && <Eye size={14} />}
           {mode === 'dsa-solver' && <Target size={14} />}
-          {mode === 'competitive' && <Zap size={14} />}
           {mode === 'interview' && <Users size={14} />}
-          {mode === 'optimization' && <TrendingUp size={14} />}
           <span className="capitalize">{mode.replace('-', ' ')} Mode</span>
         </div>
         <p className="text-[#B3B3B3] text-xs max-w-xs">

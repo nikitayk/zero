@@ -1,4 +1,4 @@
-import { MessageSquare, Search, Code, Eye, Plus, Settings, Target, Zap, Users, TrendingUp, Trophy } from 'lucide-react';
+import { MessageSquare, Eye, Plus, Settings, Target, Users, Trophy, BookOpen, ClipboardCheck } from 'lucide-react';
 import type { AppMode } from '../types';
 
 interface SidebarProps {
@@ -9,26 +9,22 @@ interface SidebarProps {
 
 const modeIcons = {
   chat: MessageSquare,
-  research: Search,
-  code: Code,
   vision: Eye,
   'dsa-solver': Target,
-  competitive: Zap,
   interview: Users,
-  optimization: TrendingUp,
   gamification: Trophy,
+  study: BookOpen,
+  quiz: ClipboardCheck,
 };
 
 const modeLabels = {
   chat: 'Chat',
-  research: 'Research',
-  code: 'Code',
   vision: 'Vision',
   'dsa-solver': 'DSA Solver',
-  competitive: 'Competitive',
   interview: 'Interview',
-  optimization: 'Optimize',
   gamification: 'Gamification',
+  study: 'Study',
+  quiz: 'Quiz',
 };
 
 export function Sidebar({ mode, onModeChange, onNewChat }: SidebarProps) {

@@ -10,13 +10,9 @@ interface HeaderProps {
 
 const modeDescriptions = {
   chat: 'Chat with AI',
-  research: 'Deep Research',
-  code: 'Code Assistant',
   vision: 'Vision Analysis',
   'dsa-solver': 'DSA Problem Solver',
-  competitive: 'Competitive Programming',
   interview: 'Interview Prep',
-  optimization: 'Code Optimization',
   gamification: 'Gamification',
 };
 

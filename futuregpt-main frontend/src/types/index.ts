@@ -66,7 +66,7 @@ export interface AIConfig {
   maxTokens: number;
 }
 
-export type AppMode = 'chat' | 'research' | 'code' | 'vision' | 'dsa-solver' | 'competitive' | 'interview' | 'optimization' | 'gamification';
+export type AppMode = 'chat' | 'vision' | 'dsa-solver' | 'interview' | 'gamification' | 'study' | 'quiz';
 
 export interface AppState {
   mode: AppMode;
@@ -130,4 +130,42 @@ export interface FileUploadConfig {
   maxSize: number; // in bytes
   allowedTypes: string[];
   maxFiles: number;
+}
+
+// New types for privacy-first features
+export interface IngestedProblem {
+  source: string;
+  url: string;
+  title: string;
+  description: string;
+  difficulty?: 'easy' | 'medium' | 'hard' | 'expert';
+  tags?: string[];
+  examples?: TestCase[];
+}
+
+export interface HintTier {
+  tier: 1 | 2 | 3;
+  content: string;
+  unlockAt: number; // epoch ms
+}
+
+export interface MasteryEntry {
+  topic: string;
+  mastery: number; // 0..1
+  errorRate: number; // 0..1
+  successStreak: number;
+}
+
+export interface MasteryProfile {
+  updatedAt: number;
+  entries: MasteryEntry[];
+}
+
+export interface InterviewSessionReport {
+  startedAt: number;
+  durationSec: number;
+  score: number; // 0..100
+  rubric: Record<string, number>;
+  notes?: string;
+  problem?: IngestedProblem;
 }

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Copy, User, Bot } from 'lucide-react';
 import type { Message } from '../types';
 
@@ -8,18 +8,31 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const onScroll = () => {
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setAutoScroll(distanceFromBottom < 80);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (autoScroll) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading, autoScroll]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-3 bg-[#0D0D0D]">
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#0D0D0D]">
       {messages.map((message) => (
         <div
           key={message.id}

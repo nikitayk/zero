@@ -147,12 +147,12 @@ POST /generate-testcases
 - **Complexity Analysis**: Time/space complexity breakdown
 
 ### Enhanced Sidebar
-- **Mode Switching**: Chat, Research, Code, Vision, DSA Solver, Competitive, Interview, Optimization
-- **Quick Actions**: New chat, settings, mode-specific features
+- **Mode Switching**: Chat, Vision, DSA Solver, Interview, Gamification
+- **Quick Actions**: New chat, settings, local Analyze Page, hints, visualize
 
 ### Welcome Screen
-- **Mode-specific Content**: Different features and examples for each mode
-- **Competitive Programming**: DSA-focused examples and features
+- **Mode-specific Content**: Focused on Chat, Vision, DSA Solver, Interview
+- **DSA & Career Advisor**: Personalized practice flows and privacy badges
 
 ## 🔧 Configuration
 

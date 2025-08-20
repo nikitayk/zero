@@ -7,8 +7,21 @@ import { ChatInput } from './components/ChatInput';
 import { DSASolver } from './components/DSASolver';
 import { Gamification } from './components/Gamification';
 import { useStorage } from './hooks/useStorage';
+import { SidePanelActions } from './components/SidePanelActions';
+import { PrivacyBadges } from './components/PrivacyBadges';
+import { SettingsPanel } from './components/SettingsPanel';
+import { DataPathways } from './components/DataPathways';
+import { HintsPanel } from './components/HintsPanel';
+import { InterviewPrep } from './components/InterviewPrep';
+import { RecommendationsPanel } from './components/RecommendationsPanel';
+import { ITSPanel } from './components/ITSPanel';
+import { Visualizer } from './components/Visualizer';
+import { QuizPanel } from './components/QuizPanel';
+import StudyPanel from './panels/study';
+import QuizTabs from './panels/quiz';
+import { ExportImportPanel } from './components/ExportImportPanel';
 import { useAI } from './hooks/useAI';
-import type { Message, AppMode, AIConfig, Context, DSAProblem } from './types';
+import type { Message, AppMode, AIConfig, Context, DSAProblem, IngestedProblem } from './types';
 
 function App() {
   // State management
@@ -16,6 +29,11 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [webAccess, setWebAccess] = useState(false);
+  const [consentContext, setConsentContext] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDataPathways, setShowDataPathways] = useState(false);
+  const [showTools, setShowTools] = useState(false);
+  const [lastProblem, setLastProblem] = useState<IngestedProblem | undefined>(undefined);
   const [context, setContext] = useState<Context>({});
   
   // Persistent storage
@@ -111,10 +129,14 @@ function App() {
     }
   }, []);
 
-  // Get webpage content and selected text from Chrome extension on mount
+  // Only pull context if consent is granted
   useEffect(() => {
-    refreshContext();
-  }, [refreshContext]);
+    if (consentContext) {
+      refreshContext();
+    } else {
+      setContext({});
+    }
+  }, [refreshContext, consentContext]);
 
   // Message handling
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
@@ -152,7 +174,7 @@ function App() {
       'outage', 'shutdown', 'service status', 'downtime', 'maintenance', 'incident'
     ];
     const lowerInput = input.trim().toLowerCase();
-    const isSearchQuery = searchKeywords.some(keyword => lowerInput.includes(keyword));
+    const isSearchQuery = webAccess && searchKeywords.some(keyword => lowerInput.includes(keyword));
 
     if (isSearchQuery) {
       // Use web search
@@ -204,7 +226,7 @@ function App() {
       const currentMessages = [...messages, userMessage];
       let assistantContent = '';
 
-      // Stream response with context
+      // Stream response with context (only if consented)
       await sendMessage(
         currentMessages,
         (chunk: string) => {
@@ -218,7 +240,7 @@ function App() {
           );
         },
         mode,
-        currentContext
+        consentContext ? currentContext : undefined
       );
 
       // Deduct credits
@@ -449,6 +471,20 @@ function App() {
 
   // Render different content based on mode
   const renderMainContent = () => {
+    if (mode === 'study') {
+      return (
+        <StudyPanel
+          pageContext={context}
+        />
+      );
+    }
+
+    if (mode === 'quiz') {
+      return (
+        <QuizTabs />
+      );
+    }
+
     if (mode === 'dsa-solver') {
       return (
         <DSASolver
@@ -511,7 +547,32 @@ function App() {
       <div className="flex flex-1 min-h-0">
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          <div className="p-2 flex items-center justify-between">
+            <SidePanelActions onIngest={(p) => { setLastProblem(p); }} />
+            <div className="flex items-center gap-2">
+              <PrivacyBadges mode={consentContext ? 'local' : 'ephemeral'} />
+              <button className="px-2 py-1 border rounded" onClick={() => setConsentContext(!consentContext)}>
+                {consentContext ? 'Revoke Page Context' : 'Allow Page Context'}
+              </button>
+              <button className="px-2 py-1 border rounded" onClick={() => setShowSettings(!showSettings)}>Settings</button>
+              <button className="px-2 py-1 border rounded" onClick={() => setShowDataPathways(!showDataPathways)}>Data Pathways</button>
+              <button className="px-2 py-1 border rounded" onClick={() => setShowTools(!showTools)}>{showTools ? 'Hide Tools' : 'Show Tools'}</button>
+            </div>
+          </div>
           {renderMainContent()}
+          {showTools && (
+            <div className="border-t border-[#2E2E2E]">
+              <HintsPanel problem={lastProblem} />
+              <InterviewPrep problem={lastProblem} />
+              <RecommendationsPanel />
+              <ITSPanel />
+              <Visualizer />
+              <QuizPanel />
+              <ExportImportPanel />
+            </div>
+          )}
+          {showSettings && <SettingsPanel />}
+          {showDataPathways && <DataPathways />}
         </div>
         
         {/* Sidebar */}
